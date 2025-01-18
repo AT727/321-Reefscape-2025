@@ -7,6 +7,9 @@ public interface AlgaeIntakeIO {
   default void setVoltage(Voltage volts) {}
   ;
 
+  default void setPivotVoltage(Voltage volts) {}
+  ;
+
   default void updateInputs(AlgaeIntakeInputs inputs) {}
   ;
 }
