@@ -43,6 +43,10 @@ public class SelfControlledSwerveDriveSimulationWrapper
     super(swerveDriveSimulation, stateStdDevs, visionMeasurementStdDevs);
   }
 
+  public SwerveDriveKinematics getSwerveKinematics() {
+    return this.swerveKinematics;
+  }
+
   @Override
   public void runChassisSpeeds(
       ChassisSpeeds chassisSpeeds,

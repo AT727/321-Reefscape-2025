@@ -9,6 +9,7 @@ import static edu.wpi.first.units.Units.RadiansPerSecond;
 import com.pathplanner.lib.util.DriveFeedforwards;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -38,8 +39,10 @@ import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig;
 public class DrivetrainSim implements SwerveDrive {
   private final SelfControlledSwerveDriveSimulationWrapper simulatedDrive;
   private final Field2d field2d;
-  final DriveTrainSimulationConfig simConfig;
-  PIDController headingController;
+  private final DriveTrainSimulationConfig simConfig;
+  private final PIDController headingController;
+  private final RobotPoseEstimator poseEstimator;
+  private Pose2d weightedPose = new Pose2d();
 
   public DrivetrainSim() {
     this.simConfig =
@@ -77,6 +80,9 @@ public class DrivetrainSim implements SwerveDrive {
     // A field2d widget for debugging
     field2d = new Field2d();
     SmartDashboard.putData("simulation field", field2d);
+
+    this.poseEstimator =
+        new RobotPoseEstimator(simulatedDrive.getSwerveKinematics(), getMeasuredModuleStates());
 
     configureAutoBuilder();
     configurePoseControllers();
@@ -250,6 +256,11 @@ public class DrivetrainSim implements SwerveDrive {
     return simulatedDrive.getOdometryEstimatedPose();
   }
 
+  @Logged(name = "WeightedRobotPose")
+  public Pose2d getWeightedPose() {
+    return weightedPose;
+  }
+
   @Logged(name = "ActualRobotPose")
   public Pose2d getActualPose() {
     return simulatedDrive.getActualPoseInSimulationWorld();
@@ -287,6 +298,14 @@ public class DrivetrainSim implements SwerveDrive {
     // send simulation data to dashboard for testing
     field2d.setRobotPose(simulatedDrive.getActualPoseInSimulationWorld());
     field2d.getObject("odometry").setPose(getPose());
+
+    poseEstimator.update(getMeasuredModuleStates());
+    weightedPose =
+        poseEstimator.getWeightedRobotPose(
+            getPose(),
+            new Pose2d(),
+            VecBuilder.fill(
+                Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY));
   }
 
   @Logged(name = "RobotLeftAligned")

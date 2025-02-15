@@ -2,7 +2,6 @@
 package frc.robot.subsystems.drivetrain;
 
 import static edu.wpi.first.units.Units.Inches;
-import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
 import edu.wpi.first.epilogue.Logged;
@@ -35,6 +34,7 @@ public class DrivetrainConstants {
   public static final double kDriveDeadband = 0.03;
   public static final double kRotationDeadband = 0.03;
   public static final AngularVelocity kMaxAngularVelocity = RadiansPerSecond.of(Math.PI * 6);
-  public static final LinearVelocity kMaxLinearVelocity =
-      MetersPerSecond.of(5.0); // TunerConstants.kSpeedAt12Volts
+  public static final LinearVelocity kMaxLinearVelocity = TunerConstants.kSpeedAt12Volts;
+
+  public static final double kTranslationStdDevCoeff = 1;
 }

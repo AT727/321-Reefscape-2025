@@ -11,9 +11,7 @@ import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N1;
@@ -32,6 +30,9 @@ import java.util.function.Supplier;
  */
 @Logged
 public interface SwerveDrive extends Subsystem {
+
+  double lastAccelX = 0;
+  double lastAccelY = 0;
 
   // driveToPose PID controllers
   PIDController xPoseController =
@@ -109,49 +110,6 @@ public interface SwerveDrive extends Subsystem {
 
   default Rotation2d flipRotation(Rotation2d rotation) {
     return MyAlliance.isRed() ? rotation.plus(Rotation2d.k180deg) : rotation;
-  }
-
-  // returns FOM of encoder data [1. INFINITY]
-  default double calculateSkiddingRatio(
-      SwerveModuleState[] swerveStatesMeasured, SwerveDriveKinematics swerveDriveKinematics) {
-    // find current angular velocity
-    final double angularVelocityOmegaMeasured =
-        swerveDriveKinematics.toChassisSpeeds(swerveStatesMeasured).omegaRadiansPerSecond;
-
-    // chassis rotational speeds
-    final SwerveModuleState[] swerveStatesRotationalPart =
-        swerveDriveKinematics.toSwerveModuleStates(
-            new ChassisSpeeds(0, 0, angularVelocityOmegaMeasured));
-
-    // chassis translational speeds
-    final double[] swerveStatesTranslationalPartMagnitudes =
-        new double[swerveStatesMeasured.length];
-
-    // for every module, convert swerve states to velocity vectors
-    for (int i = 0; i < swerveStatesMeasured.length; i++) {
-      final Translation2d
-          swerveStateMeasuredAsVector =
-              convertSwerveStateToVelocityVector(swerveStatesMeasured[i]), // total chassis velocity
-          swerveStatesRotationalPartAsVector = // rotational velocity
-          convertSwerveStateToVelocityVector(swerveStatesRotationalPart[i]),
-          swerveStatesTranslationalPartAsVector = // translational velocity
-          swerveStateMeasuredAsVector.minus(swerveStatesRotationalPartAsVector);
-      swerveStatesTranslationalPartMagnitudes[i] = swerveStatesTranslationalPartAsVector.getNorm();
-    }
-
-    // find maximum & minimum translation
-    double maximumTranslationalSpeed = 0, minimumTranslationalSpeed = Double.POSITIVE_INFINITY;
-    for (double translationalSpeed : swerveStatesTranslationalPartMagnitudes) {
-      maximumTranslationalSpeed = Math.max(maximumTranslationalSpeed, translationalSpeed);
-      minimumTranslationalSpeed = Math.min(minimumTranslationalSpeed, translationalSpeed);
-    }
-
-    return maximumTranslationalSpeed / minimumTranslationalSpeed;
-  }
-
-  private static Translation2d convertSwerveStateToVelocityVector(
-      SwerveModuleState swerveModuleState) {
-    return new Translation2d(swerveModuleState.speedMetersPerSecond, swerveModuleState.angle);
   }
 
   Command teleopDrive(
