@@ -1,10 +1,11 @@
 /* (C) Robolancers 2025 */
 package frc.robot.subsystems.drivetrain;
 
+import static edu.wpi.first.units.Units.Seconds;
+
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
@@ -12,36 +13,36 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.BuiltInAccelerometer;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.BuiltInAccelerometerSim;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.robot.RobotConstants;
 import java.util.HashMap;
 
 /*
  * PoseEstimator class that uses 1690 FOM system. Assumes standard deviation and FOM to be the conceptionally the same.
  * Alternative way to use this: use calculateRobotStdDev() in DrivetrainReal to update robotStdDev
- * TODO: simluated FOM to check if weighted average would work
- *
  */
 public class RobotPoseEstimator {
   private SwerveDriveKinematics kinematics;
   private SwerveModuleState[] moduleStates;
-  private static BuiltInAccelerometer accelerometer;
-  private static BuiltInAccelerometerSim accelerometerSim;
+  private BuiltInAccelerometer accelerometer = new BuiltInAccelerometer();
+  ;
+  private BuiltInAccelerometerSim accelerometerSim = new BuiltInAccelerometerSim(accelerometer);
+  ;
 
   // variables
-  private static double lastAccelX = 0;
-  private static double lastAccelY = 0;
-  private static double kCollisionThreshold = 2;
+  private double lastAccelX = 0;
+  private double lastAccelY = 0;
+  private double kCollisionThreshold = 2;
 
   // key - position, value - FOM
-  private static HashMap<Double, Double> xFOMPose = new HashMap<Double, Double>();
-  private static HashMap<Double, Double> yFOMPose = new HashMap<Double, Double>();
+  private HashMap<Double, Double> xFOMPose = new HashMap<Double, Double>();
+  private HashMap<Double, Double> yFOMPose = new HashMap<Double, Double>();
 
   public RobotPoseEstimator(SwerveDriveKinematics kinematics, SwerveModuleState[] modulesStates) {
     this.kinematics = kinematics;
     this.moduleStates = modulesStates;
-    accelerometer = new BuiltInAccelerometer();
-    accelerometerSim = new BuiltInAccelerometerSim(accelerometer);
   }
 
   public Matrix<N3, N1> calculateRobotStdDev() {
@@ -86,6 +87,7 @@ public class RobotPoseEstimator {
     }
 
     // skid ratio
+    SmartDashboard.putNumber("skid ratio", maximumTranslationalSpeed / minimumTranslationalSpeed);
     return maximumTranslationalSpeed / minimumTranslationalSpeed;
   }
 
@@ -94,22 +96,20 @@ public class RobotPoseEstimator {
     return new Translation2d(swerveModuleState.speedMetersPerSecond, swerveModuleState.angle);
   }
 
-  // TODO fix this
-  private static boolean detectCollision() {
+  // TODO accelatormator doesnt give data? fix this
+  private boolean detectCollision() {
     // find accelermator spike x
-    double currentAccelX = accelerometerSim.getX();
-    double jerkX = currentAccelX - lastAccelX;
+    double currentAccelX = RobotBase.isReal() ? accelerometer.getX() : accelerometerSim.getX();
+    double jerkX = (currentAccelX - lastAccelX) / RobotConstants.kRobotLoopPeriod.in(Seconds);
     lastAccelX = currentAccelX;
 
     // find accelermator spike y
-    double currentAccelY = accelerometerSim.getY();
-    double jerkY = currentAccelY - lastAccelY;
+    double currentAccelY = RobotBase.isReal() ? accelerometer.getY() : accelerometerSim.getY();
+    double jerkY = (currentAccelY - lastAccelY) / RobotConstants.kRobotLoopPeriod.in(Seconds);
     lastAccelY = currentAccelY;
 
     // if we get a spike >2 G then we have a collision
-    return Math.abs(jerkX) > kCollisionThreshold && Math.abs(jerkY) > kCollisionThreshold
-        ? true
-        : false;
+    return Math.abs(jerkX) > kCollisionThreshold && Math.abs(jerkY) > kCollisionThreshold;
   }
 
   // called periodically to update pose estimator
@@ -119,12 +119,10 @@ public class RobotPoseEstimator {
 
   public Pose2d getWeightedRobotPose(
       Pose2d robotPose, Pose2d visionPose, Matrix<N3, N1> visionStdDev) {
-    // if we are in a collision, ignore robot pose
+    // if we are in a collision, ignore robot pose or increase FOM
     double robotFOM = detectCollision() ? Double.POSITIVE_INFINITY : calculateSkiddingRatio();
-    // double robotFOM = calculateSkiddingRatio();
-    SmartDashboard.putBoolean("collision", detectCollision());
 
-    // add 1 to the stdDev so minimum value is 1
+    // TODO calculate this based on how jittery the response is
     double visionFOM = visionStdDev.get(0, 0) + 1;
 
     // fill maps w/ fom and poses
@@ -141,7 +139,7 @@ public class RobotPoseEstimator {
     xFOMPose.clear();
     yFOMPose.clear();
 
-    return new Pose2d(weightedPoseX, weightedPoseY, Rotation2d.kZero);
+    return new Pose2d(weightedPoseX, weightedPoseY, robotPose.getRotation());
   }
 
   // calculate weighted average based on 1690's pose merging

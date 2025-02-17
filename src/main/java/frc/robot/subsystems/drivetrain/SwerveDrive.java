@@ -112,6 +112,16 @@ public interface SwerveDrive extends Subsystem {
     return MyAlliance.isRed() ? rotation.plus(Rotation2d.k180deg) : rotation;
   }
 
+  void setAlignmentSetpoint(Pose2d setpoint);
+
+  /**
+   * Checks whether the translation components and rotation are within 1e-9, the WPILib default
+   * tolerance for equality
+   *
+   * @return whether the SwerveDrive is at the target alignment pose
+   */
+  boolean atPoseSetpoint();
+
   Command teleopDrive(
       DoubleSupplier translationX, DoubleSupplier translationY, DoubleSupplier rotation);
 
@@ -170,6 +180,8 @@ public interface SwerveDrive extends Subsystem {
 
   Pose2d getPose();
 
+  Pose2d getReefVisionPose();
+
   ChassisSpeeds getChassisSpeeds();
 
   Rotation2d getHeading();
@@ -178,4 +190,9 @@ public interface SwerveDrive extends Subsystem {
 
   void addVisionMeasurement(
       Pose2d visionRobotPose, double timeStampSeconds, Matrix<N3, N1> standardDeviations);
+
+  void addReefVisionMeasurement(
+      Pose2d visionRobotPose, double timeStampSeconds, Matrix<N3, N1> standardDeviations);
+
+  default void addVisionData(Pose2d visionRobotPose, Matrix<N3, N1> visionStdDev) {}
 }
