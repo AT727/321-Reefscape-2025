@@ -35,6 +35,7 @@ import frc.robot.subsystems.elevatorarm.ElevatorArm;
 import frc.robot.subsystems.elevatorarm.ElevatorArmConstants;
 import frc.robot.subsystems.leds.Leds;
 import frc.robot.subsystems.vision.Vision;
+import frc.robot.util.AIRobotInSimulation;
 import frc.robot.util.ReefPosition;
 import java.util.function.DoubleSupplier;
 
@@ -133,6 +134,7 @@ public class RobotContainer {
                 .goToHeight(() -> ElevatorConstants.kElevatorDangerHeight.plus(Meters.of(0.1)))
                 .until(new Trigger(algaePivot::inCollisionZone).negate()));
 
+    AIRobotInSimulation.startOpponentRobotSimulations();
     configureBindings();
   }
 

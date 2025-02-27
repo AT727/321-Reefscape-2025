@@ -2,10 +2,8 @@
 package frc.robot.subsystems.drivetrain;
 
 import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
-import static edu.wpi.first.units.Units.Pounds;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
 import com.pathplanner.lib.util.DriveFeedforwards;
@@ -21,7 +19,6 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -30,9 +27,7 @@ import frc.robot.util.SelfControlledSwerveDriveSimulationWrapper;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import org.ironmaple.simulation.SimulatedArena;
-import org.ironmaple.simulation.drivesims.COTS;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
-import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig;
 
 /*
  * Maplesim drivetrain
@@ -42,33 +37,16 @@ public class DrivetrainSim implements SwerveDrive {
   private final SelfControlledSwerveDriveSimulationWrapper simulatedDrive;
   private final Field2d field2d;
   private Pose2d alignmentSetpoint = Pose2d.kZero;
-  final DriveTrainSimulationConfig simConfig;
   PIDController headingController;
 
   private final SwerveDrivePoseEstimator reefPoseEstimator;
 
   public DrivetrainSim() {
-    this.simConfig =
-        DriveTrainSimulationConfig.Default()
-            .withGyro(COTS.ofPigeon2())
-            .withSwerveModule(
-                COTS.ofMark4(
-                    DCMotor.getKrakenX60(1),
-                    DCMotor.getKrakenX60(1),
-                    COTS.WHEELS.COLSONS.cof, // Use the COF for Colson Wheels
-                    3)) // L3 Gear ratio
-            // Configures the track length and track width (spacing between swerve modules)
-            .withTrackLengthTrackWidth(
-                DrivetrainConstants.kWheelBase, DrivetrainConstants.kTrackWidth)
-            // Configures the bumper size (dimensions of the robot bumper) trackwidth + 6 inches
-            .withBumperSize(
-                DrivetrainConstants.kWheelBase.plus(Inches.of(6)),
-                DrivetrainConstants.kTrackWidth.plus(Inches.of(6)))
-            .withRobotMass(Pounds.of(113));
 
     this.simulatedDrive =
         new SelfControlledSwerveDriveSimulationWrapper(
-            new SwerveDriveSimulation(simConfig, new Pose2d(2, 2, new Rotation2d())));
+            new SwerveDriveSimulation(
+                DrivetrainConstants.kSimConfig, new Pose2d(2, 2, new Rotation2d())));
 
     this.headingController =
         new PIDController(

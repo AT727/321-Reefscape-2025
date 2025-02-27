@@ -4,16 +4,20 @@ package frc.robot.subsystems.drivetrain;
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.Pounds;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.Seconds;
 
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.RobotBase;
+import org.ironmaple.simulation.drivesims.COTS;
+import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig;
 
 @Logged
 public class DrivetrainConstants {
@@ -45,4 +49,22 @@ public class DrivetrainConstants {
 
   public static final Distance kAlignmentSetpointTranslationTolerance = Inches.one();
   public static final Angle kAlignmentSetpointRotationTolerance = Degrees.of(2.0);
+
+  public static final DriveTrainSimulationConfig kSimConfig =
+      DriveTrainSimulationConfig.Default()
+          .withGyro(COTS.ofPigeon2())
+          .withSwerveModule(
+              COTS.ofMark4(
+                  DCMotor.getKrakenX60(1),
+                  DCMotor.getKrakenX60(1),
+                  COTS.WHEELS.COLSONS.cof, // Use the COF for Colson Wheels
+                  3)) // L3 Gear ratio
+          // Configures the track length and track width (spacing between swerve modules)
+          .withTrackLengthTrackWidth(
+              DrivetrainConstants.kWheelBase, DrivetrainConstants.kTrackWidth)
+          // Configures the bumper size (dimensions of the robot bumper) trackwidth + 6 inches
+          .withBumperSize(
+              DrivetrainConstants.kWheelBase.plus(Inches.of(6)),
+              DrivetrainConstants.kTrackWidth.plus(Inches.of(6)))
+          .withRobotMass(Pounds.of(113));
 }
