@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import frc.robot.util.MyAlliance;
 import java.util.function.DoubleSupplier;
@@ -165,6 +166,11 @@ public interface SwerveDrive extends Subsystem {
             })
         .andThen(run(() -> driveToFieldPose(pose.get())));
   }
+
+  default Command xBrake() {
+    return Commands.none();
+  }
+  ;
 
   void resetPose(Pose2d pose);
 

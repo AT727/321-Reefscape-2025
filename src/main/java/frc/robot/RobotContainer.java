@@ -80,19 +80,24 @@ public class RobotContainer {
 
   private DoubleSupplier driverForward =
       () ->
-          -MathUtil.applyDeadband(Math.hypot(driver.getLeftY(), driver.getLeftX()), 0.05)
+          -MathUtil.applyDeadband(
+                  Math.hypot(driver.getLeftY(), driver.getLeftX()),
+                  DrivetrainConstants.kDriveDeadband)
               * Math.cos(Math.atan2(driver.getLeftX(), driver.getLeftY()))
               * (isSlowMode.getAsBoolean()
                   ? 1.5
                   : DrivetrainConstants.kMaxLinearVelocity.in(MetersPerSecond));
   private DoubleSupplier driverStrafe =
       () ->
-          -MathUtil.applyDeadband(Math.hypot(driver.getLeftY(), driver.getLeftX()), 0.05)
+          -MathUtil.applyDeadband(
+                  Math.hypot(driver.getLeftY(), driver.getLeftX()),
+                  DrivetrainConstants.kDriveDeadband)
               * Math.sin(Math.atan2(driver.getLeftX(), driver.getLeftY()))
               * (isSlowMode.getAsBoolean()
                   ? 1.5
                   : DrivetrainConstants.kMaxLinearVelocity.in(MetersPerSecond));
-  private DoubleSupplier driverTurn = () -> -MathUtil.applyDeadband(driver.getRightX(), 0.05) * 5;
+  private DoubleSupplier driverTurn =
+      () -> -MathUtil.applyDeadband(driver.getRightX(), DrivetrainConstants.kRotationDeadband) * 5;
 
   // robot queued states
   private ReefPosition queuedReefPosition = ReefPosition.RIGHT;
@@ -120,6 +125,13 @@ public class RobotContainer {
                   || queuedSetpoint == CoralScorerSetpoint.L3
                   || queuedSetpoint == CoralScorerSetpoint.L4);
 
+  private Trigger isBraking =
+      new Trigger(
+          () ->
+              Math.abs(driver.getLeftY()) < DrivetrainConstants.kDriveDeadband
+                  && Math.abs(driver.getLeftX()) < DrivetrainConstants.kDriveDeadband
+                  && Math.abs(driver.getRightX()) < DrivetrainConstants.kRotationDeadband);
+
   private DoubleSupplier reefAlignProgressPercent =
       () ->
           leds.calculateProgressBar(
@@ -142,6 +154,7 @@ public class RobotContainer {
 
     // drive
     drivetrain.setDefaultCommand(drivetrain.teleopDrive(driverForward, driverStrafe, driverTurn));
+    isBraking.whileTrue(drivetrain.xBrake());
 
     // full-featured default commnds
     // algaeRollers.setDefaultCommand(algaeRollers.stallIfHasAlgae());

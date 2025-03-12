@@ -68,6 +68,8 @@ public class DrivetrainReal extends SwerveDrivetrain<TalonFX, TalonFX, CANcoder>
           .withRotationalDeadband(0.1);
   // .withRotationalDeadband(0.25);
 
+  private final SwerveRequest.SwerveDriveBrake xBrake = new SwerveRequest.SwerveDriveBrake();
+
   private final SwerveDrivePoseEstimator reefPoseEstimator;
 
   private final Field2d poseField = new Field2d();
@@ -100,12 +102,6 @@ public class DrivetrainReal extends SwerveDrivetrain<TalonFX, TalonFX, CANcoder>
                   translationY.getAsDouble(),
                   rotation.getAsDouble(),
                   DrivetrainConstants.kLoopDt.in(Seconds));
-
-          // x braking
-          // if(Math.abs(newTranslationX) < DriveConstants.kDriveDeadband &&
-          // Math.abs(newTranslationY) < DriveConstants.kDriveDeadband &&
-          // Math.abs(newRotation) < DriveConstants.kRotationDeadband){
-          // setControl(new SwerveRequest.SwerveDriveBrake())};
 
           setControl(
               fieldCentricRequest
@@ -271,6 +267,14 @@ public class DrivetrainReal extends SwerveDrivetrain<TalonFX, TalonFX, CANcoder>
             .withTargetDirection(
                 MyAlliance.isRed() ? rotation.plus(Rotation2d.fromDegrees(180)) : rotation)
             .withForwardPerspective(ForwardPerspectiveValue.OperatorPerspective));
+  }
+
+  @Override
+  public Command xBrake() {
+    return run(
+        () -> {
+          setControl(xBrake);
+        });
   }
 
   @Override
