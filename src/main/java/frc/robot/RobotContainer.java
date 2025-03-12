@@ -153,8 +153,10 @@ public class RobotContainer {
         .onTrue(elevator.homeEncoder().onlyIf(() -> !elevator.elevatorIsHomed()));
 
     // drive
-    drivetrain.setDefaultCommand(drivetrain.teleopDrive(driverForward, driverStrafe, driverTurn));
-    isBraking.whileTrue(drivetrain.xBrake());
+    drivetrain.setDefaultCommand(
+        isBraking.getAsBoolean()
+            ? drivetrain.teleopDrive(driverForward, driverStrafe, driverTurn)
+            : drivetrain.xBrake());
 
     // full-featured default commnds
     // algaeRollers.setDefaultCommand(algaeRollers.stallIfHasAlgae());
