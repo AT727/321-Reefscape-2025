@@ -125,13 +125,6 @@ public class RobotContainer {
                   || queuedSetpoint == CoralScorerSetpoint.L3
                   || queuedSetpoint == CoralScorerSetpoint.L4);
 
-  private Trigger isBraking =
-      new Trigger(
-          () ->
-              Math.abs(driver.getLeftY()) < DrivetrainConstants.kDriveDeadband
-                  && Math.abs(driver.getLeftX()) < DrivetrainConstants.kDriveDeadband
-                  && Math.abs(driver.getRightX()) < DrivetrainConstants.kRotationDeadband);
-
   private DoubleSupplier reefAlignProgressPercent =
       () ->
           leds.calculateProgressBar(
@@ -153,10 +146,7 @@ public class RobotContainer {
         .onTrue(elevator.homeEncoder().onlyIf(() -> !elevator.elevatorIsHomed()));
 
     // drive
-    drivetrain.setDefaultCommand(
-        isBraking.getAsBoolean()
-            ? drivetrain.teleopDrive(driverForward, driverStrafe, driverTurn)
-            : drivetrain.xBrake());
+    drivetrain.setDefaultCommand(drivetrain.teleopDrive(driverForward, driverStrafe, driverTurn));
 
     // full-featured default commnds
     // algaeRollers.setDefaultCommand(algaeRollers.stallIfHasAlgae());

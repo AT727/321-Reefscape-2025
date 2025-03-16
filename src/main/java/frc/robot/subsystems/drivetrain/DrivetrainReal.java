@@ -96,12 +96,22 @@ public class DrivetrainReal extends SwerveDrivetrain<TalonFX, TalonFX, CANcoder>
       DoubleSupplier translationX, DoubleSupplier translationY, DoubleSupplier rotation) {
     return run(
         () -> {
+          boolean xBrake =
+              Math.abs(translationX.getAsDouble()) < DrivetrainConstants.kDriveDeadband
+                  && Math.abs(translationY.getAsDouble()) < DrivetrainConstants.kDriveDeadband
+                  && Math.abs(rotation.getAsDouble()) < DrivetrainConstants.kRotationDeadband;
+
           var speeds =
               ChassisSpeeds.discretize(
                   translationX.getAsDouble(),
                   translationY.getAsDouble(),
                   rotation.getAsDouble(),
                   DrivetrainConstants.kLoopDt.in(Seconds));
+
+          if (xBrake) {
+            setControl(this.xBrake);
+            return;
+          }
 
           setControl(
               fieldCentricRequest
